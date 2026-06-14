@@ -69,12 +69,20 @@ def validar_entero(mensaje):
             print("Error: Entrada inválida.")
 
 def validar_texto(mensaje):
-    # Función para evitar campos vacíos y asegurar formato de texto.
+    # Función que permite el ingreso de texto con espacios (ej: Estados Unidos).
     while True:
-        texto = input(mensaje).strip()
-        if texto:
-            return texto.capitalize()
-        print("Error: El campo no puede estar vacío.")
+        # Limpiamos espacios accidentales al inicio y al final.
+        entrada = input(mensaje).strip()
+        
+        # Validación:
+        # 1. Verificamos que no esté vacío.
+        # 2. Usamos replace(" ", "") para validar solo las letras con .isalpha().
+        if entrada and entrada.replace(" ", "").isalpha():
+            # Usamos .title() para que cada palabra comience con mayúscula.
+            return entrada.title()
+        
+        # Mensaje orientador para una comunicación leal con el usuario.
+        print("Error: Ingrese un nombre de país válido (solo texto).")
 
 # ============================================================
 # BLOQUE 3: LÓGICA DE PERSISTENCIA (MANEJO DE ARCHIVOS)
