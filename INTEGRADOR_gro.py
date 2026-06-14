@@ -124,18 +124,52 @@ def agregar_pais(inventario):
     print(f"✅ '{nombre}' agregado correctamente.")
 
 def actualizar_pais(inventario):
-    # Modifica datos de un registro existente buscando por coincidencia exacta.
-    print("\n--- 2. ACTUALIZAR DATOS ---")
-    nombre_buscado = input("Nombre del país a modificar: ").strip().lower()
+    # OPCIÓN 2: Modifica datos permitiendo búsqueda parcial de nombres.
+    if not inventario:
+        print("\n Mensaje: El inventario está vacío. Cargue datos antes de operar.")
+        return
+
+    print("\n--- 2. ACTUALIZAR DATOS (BÚSQUEDA PARCIAL) ---")
+    # Normalización de entrada para una comunicación leal con el usuario.
+    termino = input("Ingrese nombre o parte del nombre a buscar: ").strip().lower()
     
-    for pais in inventario:
-        if pais['nombre'].lower() == nombre_buscado:
-            print(f"País encontrado: {pais['nombre']} | Continente: {pais['continente']}")
-            pais['poblacion'] = validar_entero("Nueva población: ")
-            pais['superficie'] = validar_entero("Nueva superficie: ")
-            print("✅ Datos actualizados con éxito.")
+    # 1. Filtramos coincidencias usando el operador 'in' y comprensión de listas.
+    coincidencias = [p for p in inventario if termino in p['nombre'].lower()]
+    
+    if not coincidencias:
+        print(f"🔍 No se encontraron países que coincidan con '{termino}'.")
+        return
+
+    # 2. Gestión de resultados múltiples.
+    pais_a_editar = None
+    
+    if len(coincidencias) == 1:
+        # Si hay una sola coincidencia, la seleccionamos automáticamente.
+        pais_a_editar = coincidencias
+    else:
+        # Si hay varias, mostramos un sub-menú para que el usuario elija.
+        print(f"\nSe encontraron {len(coincidencias)} coincidencias:")
+        for i, p in enumerate(coincidencias):
+            print(f"{i + 1}. {p['nombre']} ({p['continente']})")
+        
+        # Validamos la selección del usuario mediante un entero.
+        seleccion = validar_entero(f"Seleccione el número del país a editar (1-{len(coincidencias)}): ")
+        
+        # Verificamos que el índice esté dentro del rango de la lista de coincidencias.
+        if 1 <= seleccion <= len(coincidencias):
+            pais_a_editar = coincidencias[seleccion - 1]
+        else:
+            print(" Error: Selección fuera de rango. Operación cancelada.")
             return
-    print("Error: El país no se encuentra en el catálogo.")
+
+    # 3. Proceso de actualización del registro seleccionado.
+    print(f"\n Editando: {pais_a_editar['nombre']} | Continente: {pais_a_editar['continente']}")
+    
+    # El cambio en el diccionario 'pais_a_editar' se refleja en 'inventario' por referencia (alias).
+    pais_a_editar['poblacion'] = validar_entero("Nueva población (sin puntos): ")
+    pais_a_editar['superficie'] = validar_entero("Nueva superficie (km²): ")
+    
+    print(f"✅ Datos de '{pais_a_editar['nombre']}' actualizados con éxito en la RAM.")
 
 def buscar_pais(inventario):
     # Búsqueda por coincidencia parcial o exacta usando el operador 'in'.
