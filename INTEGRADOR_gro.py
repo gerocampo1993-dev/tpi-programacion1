@@ -33,6 +33,9 @@ import os
 # Defino las constantes al inicio para facilitar el mantenimiento del código.
 NOMBRE_ARCHIVO = "paises.csv"
 
+# Constante para restringir los ingresos a opciones reales.(ayuda a la función de filtro por continente)
+CONTINENTES_VALIDOS = ("América", "Europa", "Asia", "África", "Oceanía", "Antártida")
+
 # Estructura de menú persistente según los requerimientos del TPI.
 MENU_PRINCIPAL = """
 --- SISTEMA DE GESTIÓN DE DATOS DE PAÍSES ---
@@ -84,6 +87,29 @@ def validar_texto(mensaje):
         # Mensaje orientador para una comunicación leal con el usuario.
         print("Error: Ingrese un nombre de país válido (solo texto).")
 
+def validar_continente():
+    # Esta función obliga al usuario a elegir un continente de la lista válida.
+    while True:
+        print("\nContinentes permitidos:", ", ".join(CONTINENTES_VALIDOS))
+        # Normalizamos la entrada para que sea insensible a mayúsculas y espacios.
+        entrada = input("Ingrese el continente (con acentos): ").strip().lower()
+        
+        # Validamos que el usuario no haya dejado el campo vacío [4].
+        if not entrada:
+            print("Error: El ingreso no puede estar vacío.")
+            continue
+
+        # Recorremos la lista de continentes permitidos para comparar.
+        for continente in CONTINENTES_VALIDOS:
+            # Usamos 'in' para permitir búsquedas parciales.
+            # Esto hace que 'amer' coincida con 'América'.
+            if entrada in continente.lower():
+                # Retornamos el nombre original con el formato correcto.
+                return continente 
+        
+        # Si el bucle termina sin encontrar coincidencias, informamos el error.
+        print(f"Error: '{entrada}' no coincide con ningún continente válido. Reintente.")
+
 # ============================================================
 # BLOQUE 3: LÓGICA DE PERSISTENCIA (MANEJO DE ARCHIVOS)
 # ============================================================
@@ -125,28 +151,61 @@ def guardar_datos(inventario):
 # ============================================================
 
 def agregar_pais(inventario):
-    # Permite registrar un país nuevo validando duplicados.
+    # OPCIÓN 1: Registrar un país validando formato de texto y duplicados.
+    # El sistema insistirá hasta que el dato sea correcto o el usuario decida salir.
     print("\n--- 1. ALTA DE PAÍS ---")
-    nombre = validar_texto("Nombre del país: ")
     
-    # Verifico si ya existe ignorando mayúsculas y espacios.
-    for pais in inventario:
-        if pais['nombre'].lower() == nombre.lower():
-            print(f"Error: El país '{nombre}' ya existe en el sistema.")
+    while True:
+        # La pregunta inicial es limpia, respetando tu lógica previa.
+        nombre_ingresado = input("Ingrese el nombre del país (solo texto, incluir acentos (ej: Japón)): ").strip()
+        print("")
+        # Si el usuario ingresa "0" en cualquier intento, cancela la carga.
+        if nombre_ingresado == "0":
+            print("Operación cancelada. Volviendo al menú principal...")
             return
 
+        # VALIDACIÓN 1: No permitir nombres vacíos.
+        if not nombre_ingresado:
+            print("Error: El nombre no puede estar vacío.")
+            print("Intente de nuevo o ingrese '0' para cancelar y volver al menú)")
+            continue
+
+        # VALIDACIÓN 2: Solo letras y espacios (para nombres como "Estados Unidos").
+        # Usamos replace para que .isalpha() analice solo los caracteres alfabéticos.
+        if not nombre_ingresado.replace(" ", "").isalpha():
+            print(" Error: El nombre debe contener solo letras.")
+            print("Ingrese un nombre válido o ingrese '0' para volver al menú)")
+            continue
+
+        # VALIDACIÓN 3: Evitar duplicados (Case Insensitive).
+        es_duplicado = False
+        for pais in inventario:
+            # Comparamos en minúsculas para que 'Brasil' y 'brasil' sean iguales.
+            if pais['nombre'].lower() == nombre_ingresado.lower():
+                print(f"Error: El país '{nombre_ingresado}' ya está en el sistema.")
+                print("Ingrese un país diferente o '0' para salir.")
+                es_duplicado = True
+                break
+        
+        # Si el nombre pasó todos los filtros, lo normalizamos y cortamos el bucle.
+        if not es_duplicado:
+            nombre_final = nombre_ingresado.title() # Formato: "Argentina".
+            break
+
+    # Procedo con los datos numéricos y el continente usando las funciones auxiliares.
+    # Recordá que validar_entero ya le avisa al usuario lo de omitir puntos.
     poblacion = validar_entero("Población total: ")
     superficie = validar_entero("Superficie (km²): ")
-    continente = validar_texto("Continente: ")
+    continente = validar_continente()
 
-    # Agrego el nuevo registro a la lista en memoria RAM.
+    # Inserto el nuevo diccionario en la lista de la memoria RAM.
     inventario.append({
-        'nombre': nombre,
+        'nombre': nombre_final,
         'poblacion': poblacion,
         'superficie': superficie,
         'continente': continente
     })
-    print(f"✅ '{nombre}' agregado correctamente.")
+    print(f"✅ '{nombre_final}' ha sido registrado exitosamente.")
 
 def actualizar_pais(inventario):
     # OPCIÓN 2: Modifica datos permitiendo búsqueda parcial de nombres.
@@ -156,7 +215,7 @@ def actualizar_pais(inventario):
 
     print("\n--- 2. ACTUALIZAR DATOS (BÚSQUEDA PARCIAL) ---")
     # Normalización de entrada para una comunicación leal con el usuario.
-    termino = input("Ingrese nombre o parte del nombre a buscar: ").strip().lower()
+    termino = input("Ingrese el nombre del país a actualizar información: ").strip().lower()
     
     # 1. Filtramos coincidencias usando el operador 'in' y comprensión de listas.
     coincidencias = [p for p in inventario if termino in p['nombre'].lower()]
@@ -288,7 +347,7 @@ def mostrar_estadisticas(inventario):
 def main():
     # Inicializo sincronizando la RAM con el archivo CSV.
     inventario_paises = cargar_datos()
-    print(f"Sistema iniciado. Se cargaron {len(inventario_paises)} registros.")
+    print(f"Sistema iniciado. Sincronización completada con base de datos. {len(inventario_paises)} registro/s cargado/s.")
 
     opcion = "0"
     while opcion != "7":
