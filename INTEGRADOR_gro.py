@@ -10,7 +10,20 @@
 # En cuanto los contenidos relevantes de la materia se incluyen: Estructuras de Datos, 
 # Manejo de Archivos CSV, Funciones y Manejo de Errores.
 # ============================================================
+print("TP INTEGRADOR - Alumno: Gerardo Ocampo - Programación I-TUP-UTN")
+print("")
+print("""Este programa gestiona una base de datos de países, permitiendo agregar,
+actualizar, buscar, filtrar y ordenar información geográfica y demográfica.
+Por medio de un menú interactivo, el usuario puede realizar consultas dinámicas y 
+obtener estadísticas generales sobre los países registrados.
+Por favor, siga las instrucciones en pantalla para operar el sistema. 
 
+¡Gracias por usarlo!
+        """)
+
+# ============================================================
+#DEPENDENCIAS EXTERNAS
+# ============================================================
 import csv
 import os
 
@@ -36,10 +49,14 @@ Seleccione una opción: """
 # BLOQUE 2: FUNCIONES AUXILIARES (VALIDACIONES)
 # ============================================================
 # Defino las funciones de validación al principio para ser reutilizadas.
-
+# Este bloque contiene las reglas de negocio para asegurar la integridad de los datos ingresados por el usuario
+# y para evitar errores comunes de formato o tipo de dato.
 def validar_entero(mensaje):
     # Función para asegurar que el ingreso sea un número entero positivo.
     while True:
+        # Empleo un bloque try para encapsular un fragmento de código que podría generar un error.
+        # Si el usuario ingresa un valor no numérico, se lanzará una excepción ValueError, que será 
+        # capturada por el except.
         try:
             valor = input(mensaje).strip()
             if valor.isdigit():
