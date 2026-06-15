@@ -54,7 +54,7 @@ Salida: - Estados Unidos - Población: 17 | Superficie: 3.000 | Continente: Amé
 Módulos estándar: csv (para persistencia) y os (para verificar existencia de archivos)
 
 🔗 Enlaces Importantes
-Video de Demostración: [Link a YouTube o Drive] (Duración: 10-15 min)
+Video de Demostración: [Link a YouTube o Drive] 
 .  Copiar aquí
 Documentación PDF: [Link al informe técnico]
 .  https://drive.google.com/file/d/1Q7PRMYgj0E8V-Yuh7u1k9KcDTHVeQNVX/view?usp=sharing
