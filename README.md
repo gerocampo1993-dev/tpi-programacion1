@@ -57,4 +57,4 @@ Módulos estándar: csv (para persistencia) y os (para verificar existencia de a
 Video de Demostración: [Link a YouTube o Drive] (Duración: 10-15 min)
 .  Copiar aquí
 Documentación PDF: [Link al informe técnico]
-.  Copiar aquí
+.  https://drive.google.com/file/d/1Q7PRMYgj0E8V-Yuh7u1k9KcDTHVeQNVX/view?usp=sharing
