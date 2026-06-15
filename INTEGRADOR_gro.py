@@ -39,13 +39,15 @@ CONTINENTES_VALIDOS = ("América", "Europa", "Asia", "África", "Oceanía", "Ant
 # Estructura de menú persistente según los requerimientos del TPI.
 MENU_PRINCIPAL = """
 --- SISTEMA DE GESTIÓN DE DATOS DE PAÍSES ---
+
 1. Agregar nuevo país
 2. Actualizar población y superficie
 3. Buscar país (Nombre)
-4. Filtrar países (Continente / Rangos)
-5. Ordenar inventario
+4. Filtrar países (Continente / Rangos de Población y Superficie)
+5. Ordenar inventario (Nombre / Población / Superficie)
 6. Mostrar estadísticas generales
 7. Guardar y Salir
+
 Seleccione una opción: """
 
 # ============================================================
@@ -210,47 +212,45 @@ def agregar_pais(inventario):
 def actualizar_pais(inventario):
     # OPCIÓN 2: Modifica datos permitiendo búsqueda parcial de nombres.
     if not inventario:
-        print("\n Mensaje: El inventario está vacío. Cargue datos antes de operar.")
+        print("\nMensaje: El inventario está vacío. Cargue datos antes de operar.")
         return
 
-    print("\n--- 2. ACTUALIZAR DATOS (BÚSQUEDA PARCIAL) ---")
+    print("\n--- 2. ACTUALIZAR DATOS DE POBLACIÓN Y SUPERFICIE ---")
     # Normalización de entrada para una comunicación leal con el usuario.
-    termino = input("Ingrese el nombre del país a actualizar información: ").strip().lower()
+    termino = input("Ingrese el nombre del país correctamente (solo texto, incluya tildes ej: Japón): ").strip().lower()
     
-    # 1. Filtramos coincidencias usando el operador 'in' y comprensión de listas.
-    coincidencias = [p for p in inventario if termino in p['nombre'].lower()]
+    # 1. Filtramos coincidencias usando el operador 'in'.
+    coincidencias = [p for p in inventario if termino in p['nombre'].strip().lower()]
     
     if not coincidencias:
         print(f"🔍 No se encontraron países que coincidan con '{termino}'.")
+        print("👉 Tip: Pruebe ingresando solo una parte del nombre (ej: 'jap' en lugar de 'japon').")
         return
 
     # 2. Gestión de resultados múltiples.
     pais_a_editar = None
     
     if len(coincidencias) == 1:
-        # Si hay una sola coincidencia, la seleccionamos automáticamente.
-        pais_a_editar = coincidencias
+        # CORRECCIÓN: Accedemos al índice  para obtener el diccionario, no la lista completa.
+        pais_a_editar = coincidencias[0]
     else:
-        # Si hay varias, mostramos un sub-menú para que el usuario elija.
         print(f"\nSe encontraron {len(coincidencias)} coincidencias:")
         for i, p in enumerate(coincidencias):
             print(f"{i + 1}. {p['nombre']} ({p['continente']})")
         
-        # Validamos la selección del usuario mediante un entero.
-        seleccion = validar_entero(f"Seleccione el número del país a editar (1-{len(coincidencias)}): ")
+        seleccion = validar_entero(f"Seleccione el número (1-{len(coincidencias)}): ")
         
-        # Verificamos que el índice esté dentro del rango de la lista de coincidencias.
         if 1 <= seleccion <= len(coincidencias):
             pais_a_editar = coincidencias[seleccion - 1]
         else:
-            print(" Error: Selección fuera de rango. Operación cancelada.")
+            print("❌ Error: Selección fuera de rango.")
             return
 
     # 3. Proceso de actualización del registro seleccionado.
-    print(f"\n Editando: {pais_a_editar['nombre']} | Continente: {pais_a_editar['continente']}")
+    print(f"\n📍 Editando: {pais_a_editar['nombre']}")
     
-    # El cambio en el diccionario 'pais_a_editar' se refleja en 'inventario' por referencia (alias).
-    pais_a_editar['poblacion'] = validar_entero("Nueva población (sin puntos): ")
+    # El cambio en el diccionario se refleja en 'inventario' por alias.
+    pais_a_editar['poblacion'] = validar_entero("Nueva población (número plano): ")
     pais_a_editar['superficie'] = validar_entero("Nueva superficie (km²): ")
     
     print(f"✅ Datos de '{pais_a_editar['nombre']}' actualizados con éxito en la RAM.")
@@ -270,32 +270,129 @@ def buscar_pais(inventario):
         print("No se encontraron coincidencias.")
 
 def filtrar_datos(inventario):
-    # Permite segmentar la información según criterios de la consigna.
-    print("\n--- 4. FILTRADO ---")
-    print("a. Por continente | b. Por rango de población")
-    opcion = input("Seleccione criterio: ").lower()
-    
-    if opcion == 'a':
-        cont = input("Nombre del continente: ").strip().lower()
-        resultado = [p for p in inventario if p['continente'].lower() == cont]
-        for r in resultado: print(r)
-    elif opcion == 'b':
-        min_pop = validar_entero("Población mínima: ")
-        max_pop = validar_entero("Población máxima: ")
-        resultado = [p for p in inventario if min_pop <= p['poblacion'] <= max_pop]
-        for r in resultado: print(r)
+    if not inventario:
+        print("\n Mensaje: El inventario está vacío. Cargue datos antes de filtrar.")
+        return
+
+    while True:
+        print("\n--- 4. FILTRADO DE PAÍSES ---")
+        print("a. Por continente")
+        print("b. Por rango de población")
+        print("c. Por rango de superficie")
+        print("")
+        print("(O ingrese '0' para cancelar y volver al menú principal)")
+        
+        opcion = input("Seleccione criterio: ").strip().lower()
+        
+        if opcion == '0':
+            return
+
+        resultado = []
+
+        if opcion == 'a':
+            cont_buscado = validar_continente()
+            resultado = [p for p in inventario if p['continente'].lower() == cont_buscado.lower()]
+            break
+
+        elif opcion == 'b':
+            min_pop = validar_entero("Población mínima: ")
+            max_pop = validar_entero("Población máxima: ")
+            if min_pop > max_pop:
+                print(" Error: Rango inválido (mínimo mayor al máximo).")
+            else:
+                resultado = [p for p in inventario if min_pop <= p['poblacion'] <= max_pop]
+                break
+
+        # --- CAMBIO PUNTUAL: Incorporación de Rango de Superficie ---
+        elif opcion == 'c':
+            min_sup = validar_entero("Superficie mínima (km²): ")
+            max_sup = validar_entero("Superficie máxima (km²): ")
+            if min_sup > max_sup:
+                print(" Error: El rango de superficie es inválido.")
+            else:
+                # Filtramos la lista de diccionarios por la clave 'superficie'.
+                resultado = [p for p in inventario if min_sup <= p['superficie'] <= max_sup]
+                break
+        # -----------------------------------------------------------
+        
+        else:
+            print(f" Error: '{opcion}' no es una opción válida.")
+        
+        continuar = input("\n¿Desea reintentar el filtrado? (S para sí / Cualquier otra tecla para salir): ").strip().lower()
+        if continuar != 's':
+            return
+
+    # Bloque de visualización (se mantiene igual, ya maneja todos los casos)
+    if resultado:
+        print(f"\n✅ Se encontraron {len(resultado)} coincidencia(s):")
+        for p in resultado:
+            pop_fmt = f"{p['poblacion']:,}".replace(",", ".")
+            sup_fmt = f"{p['superficie']:,}".replace(",", ".")
+            print(f"-{p['nombre']} - Población: {pop_fmt} | Superficie: {sup_fmt} | Continente: {p['continente']}")
+    else:
+        print("🔍 No se encontraron países que cumplan con el criterio.")
 
 def ordenar_inventario(inventario):
-    # Uso sorted() para no alterar la lista original si fuera necesario, o reasignación.
-    print("\n--- 5. ORDENAMIENTO ---")
-    print("1. Por Nombre | 2. Por Población")
-    criterio = input("Opción: ")
+    # Verificación de persistencia: no operamos sobre una lista vacía.
+    if not inventario:
+        print("\n Mensaje: El inventario está vacío. No hay datos para ordenar.")
+        return
+
+    while True:
+        print("\n--- 5. ORDENAMIENTO ---")
+        print("1. Por Nombre (A-Z)")
+        print("2. Por Población (Mayor a Menor)")
+        print("3. Por Superficie (Ascendente)") 
+        print("4. Por Superficie (Descendente)") 
+        print("(O ingrese '0' para cancelar y volver al menú principal)")
+        
+        criterio = input("Seleccione criterio (elija una opción): ").strip()
+
+        if criterio == '0':
+            return
+
+        # Aplicamos el ordenamiento en la RAM.
+        if criterio == '1':
+            inventario.sort(key=lambda x: x['nombre'])
+            mensaje_exito = "Nombre (A-Z)"
+            break
+        elif criterio == '2':
+            inventario.sort(key=lambda x: x['poblacion'], reverse=True)
+            mensaje_exito = "Población (Descendente)"
+            break
+        elif criterio == '3':
+            inventario.sort(key=lambda x: x['superficie'])
+            mensaje_exito = "Superficie (Ascendente)"
+            break
+        elif criterio == '4':
+            inventario.sort(key=lambda x: x['superficie'], reverse=True)
+            mensaje_exito = "Superficie (Descendente)"
+            break
+        else:
+            print(f" Error: '{criterio}' no es una opción válida.")
+            continue
+
+    # --- VISUALIZACIÓN  ---
+    # Una vez que el flujo sale del bucle (break), mostramos la lista ordenada.
+    print(f"\n Listado ordenado por {mensaje_exito}:")
     
-    if criterio == '1':
-        inventario.sort(key=lambda x: x['nombre'])
-    elif criterio == '2':
-        inventario.sort(key=lambda x: x['poblacion'], reverse=True)
-    print("Inventario ordenado.")
+    for p in inventario:
+        # Aplicamos formato regional de miles para una comunicación leal.
+        pop_fmt = f"{p['poblacion']:,}".replace(",", ".")
+        sup_fmt = f"{p['superficie']:,}".replace(",", ".")
+        
+        #Selección de qué imprimir según la opción elegida.
+        if criterio == '1':
+            # Si se ordena por nombre, mostramos nombre y continente para dar contexto.
+            print(f"- {p['nombre']} ({p['continente']})")
+        
+        elif criterio == '2':
+            # Si se ordena por población, solo mostramos el dato relevante.
+            print(f"- {p['nombre']} - {pop_fmt} habitantes")
+        
+        elif criterio in ('3', '4'):
+            # Si se ordena por superficie, destacamos solo los km².
+            print(f"- {p['nombre']} - {sup_fmt} km²")
 
 def mostrar_estadisticas(inventario):
     # Cálculos estadísticos sobre la lista de diccionarios.
